@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Street Football - Gameplay Prototype</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-family: monospace;
+    color: #ccc;
+  }
+  canvas {
+    background: #000;
+    display: block;
+    max-height: calc(100vh - 60px);
+    max-width: 95vw;
+    width: auto;
+    height: auto;
+  }
+  #hud {
+    margin-top: 8px;
+    font-size: 13px;
+    text-align: center;
+    max-width: 500px;
+  }
+</style>
+</head>
+<body>
+<canvas id="field" width="500" height="800"></canvas>
+<div id="hud">
+  Score: <span id="score">0</span> &nbsp;|&nbsp;
+  1/2/3: select field player &nbsp;|&nbsp;
+  WASD / Arrows: move &nbsp;|&nbsp;
+  Space: kick
+</div>
+<script src="game.js"></script>
+</body>
+</html>
