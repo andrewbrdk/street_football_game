@@ -3,6 +3,7 @@
 const canvas = document.getElementById('field');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
+const pauseTimeEl = document.getElementById('pauseTime');
 
 const CANVAS_W = canvas.width;
 const CANVAS_H = canvas.height;
@@ -32,6 +33,9 @@ const CARRY_DIST = PLAYER_RADIUS + BALL_RADIUS + 4;
 const PICKUP_RANGE = PLAYER_RADIUS + BALL_RADIUS + 4;
 
 let score = 0;
+let PAUSED = false;
+const PAUSE_TIME_MAX = 10; // seconds
+let pauseTimeLeft = PAUSE_TIME_MAX;
 
 // Single team: 3 field players + 1 goalkeeper
 const players = [
@@ -73,6 +77,14 @@ window.addEventListener('keydown', (e) => {
 
   if (e.code === 'Space') {
     e.preventDefault();
+    if (PAUSED) {
+      PAUSED = false;
+    } else if (pauseTimeLeft > 0) {
+      PAUSED = true;
+    }
+  }
+
+  if (e.code === 'KeyF') {
     const p = fieldPlayers[selectedIndex];
     if (possessor === p) {
       possessor = null;
@@ -231,6 +243,7 @@ function updateBall() {
       if (ball.y - BALL_RADIUS < FIELD.top - GOAL.depth) {
         score++;
         scoreEl.textContent = score;
+        pauseTimeLeft = PAUSE_TIME_MAX;
         resetBall();
       }
     } else {
@@ -245,6 +258,7 @@ function updateBall() {
       if (ball.y + BALL_RADIUS > FIELD.bottom + GOAL.depth) {
         score++;
         scoreEl.textContent = score;
+        pauseTimeLeft = PAUSE_TIME_MAX;
         resetBall();
       }
     } else {
@@ -328,19 +342,43 @@ function drawBall() {
   ctx.fill();
 }
 
-function loop() {
-  updatePlayers();
-  updateKeeperAI();
-  updateBall();
-  dribble();
-  updateBallPossession();
+let lastTime = performance.now();
+function loop(now) {
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+
+  if (PAUSED) {
+    pauseTimeLeft = Math.max(0, pauseTimeLeft - dt);
+    pauseTimeEl.textContent = pauseTimeLeft.toFixed(1);
+    if (pauseTimeLeft === 0) PAUSED = false;
+  } else {
+    updatePlayers();
+    updateKeeperAI();
+    updateBall();
+    dribble();
+    updateBallPossession();
+    pauseTimeEl.textContent = pauseTimeLeft.toFixed(1);
+  }
 
   drawField();
   drawPlayers();
   drawMoveTarget();
   drawBall();
+  if (PAUSED) drawPauseOverlay();
 
   requestAnimationFrame(loop);
 }
 
-loop();
+function drawPauseOverlay() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 32px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PAUSED', CANVAS_W / 2, CANVAS_H / 2);
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText(`${pauseTimeLeft.toFixed(1)}s left`, CANVAS_W / 2, CANVAS_H / 2 + 28);
+  ctx.textAlign = 'left';
+}
+
+requestAnimationFrame(loop);
