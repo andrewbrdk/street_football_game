@@ -69,6 +69,7 @@ function setFieldPlayerCount(count) {
   }));
   selectedIndex = clamp(selectedIndex, 0, fieldPlayers.length - 1);
   resetBall();
+  renderMobileControls();
 }
 
 let selectedIndex = 0; // index into fieldPlayers
@@ -98,10 +99,10 @@ window.addEventListener('keydown', (e) => {
   if (e.shiftKey && ['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
     setFieldPlayerCount(Number(e.code.slice(-1)));
   } else {
-    if (e.code === 'Digit1' && fieldPlayers[0]) { selectedIndex = 0; fieldPlayers[0].target = clampToField(mousePos); }
-    if (e.code === 'Digit2' && fieldPlayers[1]) { selectedIndex = 1; fieldPlayers[1].target = clampToField(mousePos); }
-    if (e.code === 'Digit3' && fieldPlayers[2]) { selectedIndex = 2; fieldPlayers[2].target = clampToField(mousePos); }
-    if (e.code === 'Digit4' && fieldPlayers[3]) { selectedIndex = 3; fieldPlayers[3].target = clampToField(mousePos); }
+    if (e.code === 'Digit1' && fieldPlayers[0]) selectPlayer(0, mousePos);
+    if (e.code === 'Digit2' && fieldPlayers[1]) selectPlayer(1, mousePos);
+    if (e.code === 'Digit3' && fieldPlayers[2]) selectPlayer(2, mousePos);
+    if (e.code === 'Digit4' && fieldPlayers[3]) selectPlayer(3, mousePos);
   }
 
   if (e.code === 'Space') {
@@ -113,21 +114,28 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  if (e.code === 'KeyF') {
-    const p = fieldPlayers[selectedIndex];
-    if (possessor === p) {
-      possessor = null;
-      const dx = mousePos.x - p.x;
-      const dy = mousePos.y - p.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      ball.vx = (dx / dist) * KICK_POWER;
-      ball.vy = (dy / dist) * KICK_POWER;
-    }
-  }
+  if (e.code === 'KeyF') kickBall(mousePos);
 });
 window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
 });
+
+function selectPlayer(i, aimPos) {
+  selectedIndex = i;
+  if (aimPos) fieldPlayers[i].target = clampToField(aimPos);
+  renderMobileControls();
+}
+
+function kickBall(aimPos) {
+  const p = fieldPlayers[selectedIndex];
+  if (possessor !== p) return;
+  possessor = null;
+  const dx = aimPos.x - p.x;
+  const dy = aimPos.y - p.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  ball.vx = (dx / dist) * KICK_POWER;
+  ball.vy = (dy / dist) * KICK_POWER;
+}
 
 function canvasPosFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
@@ -153,6 +161,41 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mousedown', (e) => {
   fieldPlayers[selectedIndex].target = clampToField(canvasPosFromEvent(e));
 });
+
+// Touch controls: drag on canvas moves the selected player; buttons below select/kick
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const pos = canvasPosFromEvent(e.touches[0]);
+  mousePos = pos;
+  fieldPlayers[selectedIndex].target = clampToField(pos);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const pos = canvasPosFromEvent(e.touches[0]);
+  mousePos = pos;
+  fieldPlayers[selectedIndex].target = clampToField(pos);
+}, { passive: false });
+
+const kickBtn = document.getElementById('kickBtn');
+kickBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  kickBall(mousePos);
+});
+kickBtn.addEventListener('click', () => kickBall(mousePos));
+
+const playerSelectButtonsEl = document.getElementById('playerSelectButtons');
+function renderMobileControls() {
+  playerSelectButtonsEl.innerHTML = '';
+  fieldPlayers.forEach((_p, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = String(i + 1);
+    if (i === selectedIndex) btn.classList.add('selected');
+    btn.addEventListener('click', () => selectPlayer(i));
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); selectPlayer(i); });
+    playerSelectButtonsEl.appendChild(btn);
+  });
+}
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));

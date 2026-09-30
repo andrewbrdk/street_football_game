@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Street Football - Gameplay Prototype</title>
 <style>
   html, body {
@@ -14,20 +15,51 @@
     flex-direction: column;
     font-family: monospace;
     color: #ccc;
+    overscroll-behavior: none;
   }
   canvas {
     background: #000;
     display: block;
-    max-height: calc(100vh - 60px);
+    max-height: calc(100vh - 110px);
     max-width: 95vw;
     width: auto;
     height: auto;
+    touch-action: none;
   }
   #hud {
     margin-top: 8px;
     font-size: 13px;
     text-align: center;
     max-width: 500px;
+    padding: 0 8px;
+  }
+  #mobileControls {
+    display: none;
+    margin-top: 10px;
+    gap: 10px;
+    align-items: center;
+  }
+  #mobileControls button {
+    font-family: monospace;
+    font-size: 16px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #222;
+    color: #eee;
+  }
+  #mobileControls button.selected {
+    border-color: #3ea6ff;
+    color: #3ea6ff;
+  }
+  #kickBtn {
+    background: #a10000;
+    border-color: #ff4040;
+    color: #fff;
+  }
+  @media (hover: none) {
+    #mobileControls { display: flex; }
+    .desktopOnly { display: none; }
   }
 </style>
 </head>
@@ -35,11 +67,17 @@
 <canvas id="field" width="500" height="800"></canvas>
 <div id="hud">
   Score: <span id="score">0</span> &nbsp;|&nbsp;
-  1/2/3: select field player &nbsp;|&nbsp;
-  Shift+1-4: dev set player count &nbsp;|&nbsp;
-  WASD / Arrows: move &nbsp;|&nbsp;
-  F: kick &nbsp;|&nbsp;
+  <span class="desktopOnly">
+    1/2/3: select field player &nbsp;|&nbsp;
+    Shift+1-4: dev set player count &nbsp;|&nbsp;
+    WASD / Arrows: move &nbsp;|&nbsp;
+    F: kick &nbsp;|&nbsp;
+  </span>
   Space: pause (<span id="pauseTime">10.0</span>s left)
+</div>
+<div id="mobileControls">
+  <div id="playerSelectButtons"></div>
+  <button id="kickBtn">KICK</button>
 </div>
 <script src="game.js"></script>
 </body>
