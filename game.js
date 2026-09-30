@@ -37,15 +37,39 @@ let PAUSED = false;
 const PAUSE_TIME_MAX = 10; // seconds
 let pauseTimeLeft = PAUSE_TIME_MAX;
 
-// Single team: 3 field players + 1 goalkeeper
-const players = [
-  { id: 'keeper', isKeeper: true, x: CANVAS_W / 2, y: FIELD.bottom - 25, vx: 0, vy: 0, color: '#ffd200' },
-  { id: 'f1', isKeeper: false, x: CANVAS_W / 2 - 100, y: CANVAS_H / 2 + 60, vx: 0, vy: 0, color: '#3ea6ff', target: null, dir: { x: 0, y: -1 } },
-  { id: 'f2', isKeeper: false, x: CANVAS_W / 2, y: CANVAS_H / 2, vx: 0, vy: 0, color: '#3ea6ff', target: null, dir: { x: 0, y: -1 } },
-  { id: 'f3', isKeeper: false, x: CANVAS_W / 2 + 100, y: CANVAS_H / 2 + 60, vx: 0, vy: 0, color: '#3ea6ff', target: null, dir: { x: 0, y: -1 } },
-];
-const fieldPlayers = players.filter(p => !p.isKeeper);
-const keeper = players.find(p => p.isKeeper);
+// Single team: 1-4 field players + 1 goalkeeper
+const FIELD_PLAYER_COLOR = '#3ea6ff';
+const MIN_FIELD_PLAYERS = 1;
+const MAX_FIELD_PLAYERS = 4;
+const keeper = { id: 'keeper', isKeeper: true, x: CANVAS_W / 2, y: FIELD.bottom - 25, vx: 0, vy: 0, color: '#ffd200' };
+let fieldPlayers = [];
+
+function fieldPlayerLayout(count) {
+  const spacing = 100;
+  const positions = [];
+  for (let i = 0; i < count; i++) {
+    const offset = (i - (count - 1) / 2) * spacing;
+    positions.push({ x: CANVAS_W / 2 + offset, y: CANVAS_H / 2 + (i % 2 === 0 ? 60 : 0) });
+  }
+  return positions;
+}
+
+function setFieldPlayerCount(count) {
+  count = clamp(count, MIN_FIELD_PLAYERS, MAX_FIELD_PLAYERS);
+  fieldPlayers = fieldPlayerLayout(count).map((pos, i) => ({
+    id: 'f' + (i + 1),
+    isKeeper: false,
+    x: pos.x,
+    y: pos.y,
+    vx: 0,
+    vy: 0,
+    color: FIELD_PLAYER_COLOR,
+    target: null,
+    dir: { x: 0, y: -1 },
+  }));
+  selectedIndex = clamp(selectedIndex, 0, fieldPlayers.length - 1);
+  resetBall();
+}
 
 let selectedIndex = 0; // index into fieldPlayers
 let mousePos = { x: CANVAS_W / 2, y: CANVAS_H / 2 };
@@ -71,9 +95,14 @@ const keys = {};
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
 
-  if (e.code === 'Digit1') { selectedIndex = 0; fieldPlayers[0].target = clampToField(mousePos); }
-  if (e.code === 'Digit2') { selectedIndex = 1; fieldPlayers[1].target = clampToField(mousePos); }
-  if (e.code === 'Digit3') { selectedIndex = 2; fieldPlayers[2].target = clampToField(mousePos); }
+  if (e.shiftKey && ['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
+    setFieldPlayerCount(Number(e.code.slice(-1)));
+  } else {
+    if (e.code === 'Digit1' && fieldPlayers[0]) { selectedIndex = 0; fieldPlayers[0].target = clampToField(mousePos); }
+    if (e.code === 'Digit2' && fieldPlayers[1]) { selectedIndex = 1; fieldPlayers[1].target = clampToField(mousePos); }
+    if (e.code === 'Digit3' && fieldPlayers[2]) { selectedIndex = 2; fieldPlayers[2].target = clampToField(mousePos); }
+    if (e.code === 'Digit4' && fieldPlayers[3]) { selectedIndex = 3; fieldPlayers[3].target = clampToField(mousePos); }
+  }
 
   if (e.code === 'Space') {
     e.preventDefault();
@@ -306,7 +335,7 @@ function drawGoal(isTop) {
 }
 
 function drawPlayers() {
-  players.forEach((p, i) => {
+  [keeper, ...fieldPlayers].forEach((p) => {
     const isSelected = !p.isKeeper && fieldPlayers[selectedIndex] === p;
     ctx.beginPath();
     ctx.arc(p.x, p.y, PLAYER_RADIUS, 0, Math.PI * 2);
@@ -381,4 +410,5 @@ function drawPauseOverlay() {
   ctx.textAlign = 'left';
 }
 
+setFieldPlayerCount(3);
 requestAnimationFrame(loop);
