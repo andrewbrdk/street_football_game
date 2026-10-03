@@ -178,7 +178,26 @@ canvas.addEventListener('touchstart', (e) => {
   handlePointerDown(pos);
 }, { passive: false });
 
+let lastTapTime = 0;
+let lastTapPos = null;
+const DOUBLE_TAP_MS = 300;
+const DOUBLE_TAP_DIST = 40;
+
 function handlePointerDown(pos) {
+  const now = performance.now();
+  const isDoubleTap = lastTapPos &&
+    (now - lastTapTime) < DOUBLE_TAP_MS &&
+    Math.hypot(pos.x - lastTapPos.x, pos.y - lastTapPos.y) < DOUBLE_TAP_DIST;
+
+  if (isDoubleTap) {
+    lastTapPos = null;
+    kickBall(pos);
+    return;
+  }
+
+  lastTapTime = now;
+  lastTapPos = pos;
+
   const tappedIndex = fieldPlayers.findIndex(
     (p) => Math.hypot(pos.x - p.x, pos.y - p.y) < PLAYER_RADIUS + 10
   );
@@ -188,13 +207,6 @@ function handlePointerDown(pos) {
     fieldPlayers[selectedIndex].target = clampToField(pos);
   }
 }
-
-const kickBtn = document.getElementById('kickBtn');
-kickBtn.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  kickBall(mousePos);
-});
-kickBtn.addEventListener('click', () => kickBall(mousePos));
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
