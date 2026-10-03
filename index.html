@@ -35,6 +35,18 @@
     max-width: 500px;
     padding: 0 8px;
   }
+  #pauseBtn {
+    margin-top: 8px;
+    font-family: monospace;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #222;
+    color: #eee;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
   #mobileControls {
     display: none;
     margin-top: 10px;
@@ -81,6 +93,7 @@
   </span>
   Space: pause (<span id="pauseTime">10.0</span>s left)
 </div>
+<button id="pauseBtn">Pause</button>
 <div id="mobileControls">
   <div id="playerSelectButtons"></div>
   <button id="kickBtn">KICK</button>

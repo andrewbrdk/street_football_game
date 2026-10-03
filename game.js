@@ -107,17 +107,27 @@ window.addEventListener('keydown', (e) => {
 
   if (e.code === 'Space') {
     e.preventDefault();
-    if (PAUSED) {
-      PAUSED = false;
-    } else if (pauseTimeLeft > 0) {
-      PAUSED = true;
-    }
+    togglePause();
   }
 
   if (e.code === 'KeyF') kickBall(mousePos);
 });
 window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
+});
+
+function togglePause() {
+  if (PAUSED) {
+    PAUSED = false;
+  } else if (pauseTimeLeft > 0) {
+    PAUSED = true;
+  }
+}
+
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  togglePause();
 });
 
 function selectPlayer(i, aimPos) {
@@ -446,5 +456,5 @@ function drawPauseOverlay() {
   ctx.textAlign = 'left';
 }
 
-setFieldPlayerCount(3);
+setFieldPlayerCount(2);
 requestAnimationFrame(loop);
