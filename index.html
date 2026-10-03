@@ -25,6 +25,8 @@
     width: auto;
     height: auto;
     touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
   #hud {
     margin-top: 8px;
@@ -42,11 +44,15 @@
   #mobileControls button {
     font-family: monospace;
     font-size: 16px;
-    padding: 10px 16px;
+    padding: 12px 18px;
+    min-width: 48px;
+    min-height: 48px;
     border-radius: 8px;
     border: 1px solid #555;
     background: #222;
     color: #eee;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
   #mobileControls button.selected {
     border-color: #3ea6ff;

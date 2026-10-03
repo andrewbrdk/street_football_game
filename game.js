@@ -162,15 +162,8 @@ canvas.addEventListener('mousedown', (e) => {
   fieldPlayers[selectedIndex].target = clampToField(canvasPosFromEvent(e));
 });
 
-// Touch controls: drag on canvas moves the selected player; buttons below select/kick
+// Tap controls: a tap on the field sets the selected player's move target
 canvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  const pos = canvasPosFromEvent(e.touches[0]);
-  mousePos = pos;
-  fieldPlayers[selectedIndex].target = clampToField(pos);
-}, { passive: false });
-
-canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   const pos = canvasPosFromEvent(e.touches[0]);
   mousePos = pos;
