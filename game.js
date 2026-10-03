@@ -69,7 +69,6 @@ function setFieldPlayerCount(count) {
   }));
   selectedIndex = clamp(selectedIndex, 0, fieldPlayers.length - 1);
   resetBall();
-  renderMobileControls();
 }
 
 let selectedIndex = 0; // index into fieldPlayers
@@ -133,7 +132,6 @@ document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
 function selectPlayer(i, aimPos) {
   selectedIndex = i;
   if (aimPos) fieldPlayers[i].target = clampToField(aimPos);
-  renderMobileControls();
 }
 
 function kickBall(aimPos) {
@@ -169,16 +167,27 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
-  fieldPlayers[selectedIndex].target = clampToField(canvasPosFromEvent(e));
+  handlePointerDown(canvasPosFromEvent(e));
 });
 
-// Tap controls: a tap on the field sets the selected player's move target
+// Tap controls: tap a player to select them, tap empty field to send the selected player there
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
   const pos = canvasPosFromEvent(e.touches[0]);
   mousePos = pos;
-  fieldPlayers[selectedIndex].target = clampToField(pos);
+  handlePointerDown(pos);
 }, { passive: false });
+
+function handlePointerDown(pos) {
+  const tappedIndex = fieldPlayers.findIndex(
+    (p) => Math.hypot(pos.x - p.x, pos.y - p.y) < PLAYER_RADIUS + 10
+  );
+  if (tappedIndex !== -1) {
+    selectedIndex = tappedIndex;
+  } else {
+    fieldPlayers[selectedIndex].target = clampToField(pos);
+  }
+}
 
 const kickBtn = document.getElementById('kickBtn');
 kickBtn.addEventListener('touchstart', (e) => {
@@ -186,19 +195,6 @@ kickBtn.addEventListener('touchstart', (e) => {
   kickBall(mousePos);
 });
 kickBtn.addEventListener('click', () => kickBall(mousePos));
-
-const playerSelectButtonsEl = document.getElementById('playerSelectButtons');
-function renderMobileControls() {
-  playerSelectButtonsEl.innerHTML = '';
-  fieldPlayers.forEach((_p, i) => {
-    const btn = document.createElement('button');
-    btn.textContent = String(i + 1);
-    if (i === selectedIndex) btn.classList.add('selected');
-    btn.addEventListener('click', () => selectPlayer(i));
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); selectPlayer(i); });
-    playerSelectButtonsEl.appendChild(btn);
-  });
-}
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
