@@ -98,36 +98,52 @@ window.addEventListener('keydown', (e) => {
   if (e.shiftKey && ['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
     setFieldPlayerCount(Number(e.code.slice(-1)));
   } else {
-    if (e.code === 'Digit1' && fieldPlayers[0]) { selectedIndex = 0; fieldPlayers[0].target = clampToField(mousePos); }
-    if (e.code === 'Digit2' && fieldPlayers[1]) { selectedIndex = 1; fieldPlayers[1].target = clampToField(mousePos); }
-    if (e.code === 'Digit3' && fieldPlayers[2]) { selectedIndex = 2; fieldPlayers[2].target = clampToField(mousePos); }
-    if (e.code === 'Digit4' && fieldPlayers[3]) { selectedIndex = 3; fieldPlayers[3].target = clampToField(mousePos); }
+    if (e.code === 'Digit1' && fieldPlayers[0]) selectPlayer(0, mousePos);
+    if (e.code === 'Digit2' && fieldPlayers[1]) selectPlayer(1, mousePos);
+    if (e.code === 'Digit3' && fieldPlayers[2]) selectPlayer(2, mousePos);
+    if (e.code === 'Digit4' && fieldPlayers[3]) selectPlayer(3, mousePos);
   }
 
   if (e.code === 'Space') {
     e.preventDefault();
-    if (PAUSED) {
-      PAUSED = false;
-    } else if (pauseTimeLeft > 0) {
-      PAUSED = true;
-    }
+    togglePause();
   }
 
-  if (e.code === 'KeyF') {
-    const p = fieldPlayers[selectedIndex];
-    if (possessor === p) {
-      possessor = null;
-      const dx = mousePos.x - p.x;
-      const dy = mousePos.y - p.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      ball.vx = (dx / dist) * KICK_POWER;
-      ball.vy = (dy / dist) * KICK_POWER;
-    }
-  }
+  if (e.code === 'KeyF') kickBall(mousePos);
 });
 window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
 });
+
+function togglePause() {
+  if (PAUSED) {
+    PAUSED = false;
+  } else if (pauseTimeLeft > 0) {
+    PAUSED = true;
+  }
+}
+
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  togglePause();
+});
+
+function selectPlayer(i, aimPos) {
+  selectedIndex = i;
+  if (aimPos) fieldPlayers[i].target = clampToField(aimPos);
+}
+
+function kickBall(aimPos) {
+  const p = fieldPlayers[selectedIndex];
+  if (possessor !== p) return;
+  possessor = null;
+  const dx = aimPos.x - p.x;
+  const dy = aimPos.y - p.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  ball.vx = (dx / dist) * KICK_POWER;
+  ball.vy = (dy / dist) * KICK_POWER;
+}
 
 function canvasPosFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
@@ -151,8 +167,46 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
-  fieldPlayers[selectedIndex].target = clampToField(canvasPosFromEvent(e));
+  handlePointerDown(canvasPosFromEvent(e));
 });
+
+// Tap controls: tap a player to select them, tap empty field to send the selected player there
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const pos = canvasPosFromEvent(e.touches[0]);
+  mousePos = pos;
+  handlePointerDown(pos);
+}, { passive: false });
+
+let lastTapTime = 0;
+let lastTapPos = null;
+const DOUBLE_TAP_MS = 300;
+const DOUBLE_TAP_DIST = 40;
+
+function handlePointerDown(pos) {
+  const now = performance.now();
+  const isDoubleTap = lastTapPos &&
+    (now - lastTapTime) < DOUBLE_TAP_MS &&
+    Math.hypot(pos.x - lastTapPos.x, pos.y - lastTapPos.y) < DOUBLE_TAP_DIST;
+
+  if (isDoubleTap) {
+    lastTapPos = null;
+    kickBall(pos);
+    return;
+  }
+
+  lastTapTime = now;
+  lastTapPos = pos;
+
+  const tappedIndex = fieldPlayers.findIndex(
+    (p) => Math.hypot(pos.x - p.x, pos.y - p.y) < PLAYER_RADIUS + 10
+  );
+  if (tappedIndex !== -1) {
+    selectedIndex = tappedIndex;
+  } else {
+    fieldPlayers[selectedIndex].target = clampToField(pos);
+  }
+}
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
@@ -410,5 +464,5 @@ function drawPauseOverlay() {
   ctx.textAlign = 'left';
 }
 
-setFieldPlayerCount(3);
+setFieldPlayerCount(2);
 requestAnimationFrame(loop);
